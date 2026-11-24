@@ -1,0 +1,796 @@
+Screens:
+  scr_Manage:
+    Properties:
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =UpdateContext({
+            loc_ManageTab: "Categories",
+            loc_CategoryView: "Active",
+            loc_AccountView: "Active",
+            loc_IsSaving: false,
+            loc_ManageError: "",
+            loc_EditCategoryId: "",
+            loc_EditCategoryName: Blank(),
+            loc_EditCategoryType: Blank(),
+            loc_EditAccountId: "",
+            loc_EditAccountName: Blank(),
+            loc_EditAccountType: Blank(),
+            loc_EditBudgetId: "",
+            loc_EditBudgetCategoryId: "",
+            loc_EditBudgetAmount: Blank(),
+            loc_EditBudgetMonth: Text(Today(), "[$-en-US]yyyy-mm")
+        });
+        Refresh(tbl_Categories);
+        Refresh(tbl_Accounts);
+        Refresh(tbl_Budgets);
+        ClearCollect(col_Categories, tbl_Categories);
+        ClearCollect(col_Accounts, tbl_Accounts);
+        ClearCollect(col_Budgets, tbl_Budgets);
+    Children:
+      - btn_BackHome_1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =Color.White
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =42
+            OnSelect: =Navigate(scr_Home, ScreenTransition.UnCover)
+            Text: ="Home"
+            Width: =110
+            X: =20
+            Y: =20
+      - lbl_ManageTitle_1:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Height: =42
+            Size: =24
+            Text: ="Manage Finance"
+            Width: =Parent.Width - 170
+            X: =80
+            Y: =20
+      - btn_TabCategories_1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_ManageTab = "Categories", Color.White, Color.Black)
+            Fill: =If(loc_ManageTab = "Categories", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =44
+            OnSelect: |-
+              =UpdateContext({loc_ManageTab: "Categories", loc_ManageError: ""})
+            Text: ="Categories"
+            Width: =(Parent.Width - 50) / 3
+            X: =20
+            Y: =82
+      - btn_TabBudgets_1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_ManageTab = "Budgets", Color.White, Color.Black)
+            Fill: =If(loc_ManageTab = "Budgets", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =44
+            OnSelect: |-
+              =UpdateContext({loc_ManageTab: "Budgets", loc_ManageError: ""})
+            Text: ="Budgets"
+            Width: =(Parent.Width - 50) / 3
+            X: =30 + (Parent.Width - 50) / 3
+            Y: =82
+      - btn_TabAccounts_1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_ManageTab = "Accounts", Color.White, Color.Black)
+            Fill: =If(loc_ManageTab = "Accounts", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =44
+            OnSelect: |-
+              =UpdateContext({loc_ManageTab: "Accounts", loc_ManageError: ""})
+            Text: ="Accounts"
+            Width: =(Parent.Width - 50) / 3
+            X: =40 + 2 * (Parent.Width - 50) / 3
+            Y: =82
+      - lbl_ManageError:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(200, 0, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =32
+            Size: =12
+            Text: =loc_ManageError
+            Visible: =!IsBlank(loc_ManageError)
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =137
+      - lbl_ManageDataStatus:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(90, 90, 90, 1)
+            Font: =Font.'Open Sans'
+            Height: =20
+            Size: =10
+            Text: |-
+              ="Excel rows loaded  |  Categories: " & CountRows(col_Categories) & "  |  Accounts: " & CountRows(col_Accounts) & "  |  Budgets: " & CountRows(col_Budgets)
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =157
+      - txt_CategoryName_1:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            Default: =Coalesce(loc_EditCategoryName, "")
+            Font: =Font.'Open Sans'
+            Height: =44
+            HintText: ="Category name (e.g. Dining, Salary)"
+            Visible: =loc_ManageTab = "Categories"
+            Width: =(Parent.Width - 60) * 0.55
+            X: =20
+            Y: =180
+      - dd_CategoryType_1:
+          Control: Classic/DropDown@2.3.1
+          Properties:
+            Default: =Coalesce(loc_EditCategoryType, "Expense")
+            Font: =Font.'Open Sans'
+            Height: =44
+            Items: =["Expense", "Income"]
+            Items.Value: =Value
+            Visible: =loc_ManageTab = "Categories"
+            Width: =(Parent.Width - 60) * 0.25
+            X: =40 + (Parent.Width - 60) * 0.55
+            Y: =180
+      - btn_SaveCategory_1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =Color.White
+            DisplayMode: =If(loc_IsSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =42
+            OnSelect: |-
+              =With(
+                  {
+                      catName: Trim(txt_CategoryName_1.Text),
+                      catType: dd_CategoryType_1.Selected.Value
+                  },
+                  If(
+                      IsBlank(catName),
+                      UpdateContext({loc_ManageError: "Enter a category name."}),
+                      !IsBlank(
+                          LookUp(
+                              col_Categories,
+                              Lower(CategoryName) = Lower(catName) &&
+                              CategoryType = catType &&
+                              Upper(Text(IsActive)) = "TRUE" &&
+                              CategoryId <> loc_EditCategoryId
+                          )
+                      ),
+                      UpdateContext({loc_ManageError: "This category already exists for the selected type."}),
+                      UpdateContext({loc_IsSaving: true, loc_ManageError: ""});
+                      IfError(
+                          If(
+                              IsBlank(loc_EditCategoryId),
+                              Patch(
+                                  tbl_Categories,
+                                  Defaults(tbl_Categories),
+                                  {
+                                      CategoryId: Text(GUID()),
+                                      CategoryName: catName,
+                                      CategoryType: catType,
+                                      IsActive: true
+                                  }
+                              ),
+                              Patch(
+                                  tbl_Categories,
+                                  LookUp(tbl_Categories, CategoryId = loc_EditCategoryId),
+                                  {
+                                      CategoryName: catName,
+                                      CategoryType: catType
+                                  }
+                              )
+                          );
+                          Refresh(tbl_Categories);
+                          ClearCollect(col_Categories, tbl_Categories);
+                          UpdateContext({
+                              loc_IsSaving: false,
+                              loc_EditCategoryId: "",
+                              loc_EditCategoryName: Blank(),
+                              loc_EditCategoryType: Blank()
+                          });
+                          Reset(txt_CategoryName_1);
+                          Reset(dd_CategoryType_1);
+                          Notify("Category saved successfully.", NotificationType.Success, 2000),
+                          UpdateContext({loc_IsSaving: false, loc_ManageError: "Could not save the category. Check the Excel table and required columns."});
+                          Notify("Could not save category.", NotificationType.Error)
+                      )
+                  )
+              );
+            Text: =If(IsBlank(loc_EditCategoryId), "Add Category", "Update Category")
+            Visible: =loc_ManageTab = "Categories"
+            Width: =180
+            X: =20
+            Y: =238
+      - btn_CancelCategoryEdit:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Height: =42
+            OnSelect: |-
+              =UpdateContext({
+                  loc_EditCategoryId: "",
+                  loc_EditCategoryName: Blank(),
+                  loc_EditCategoryType: Blank(),
+                  loc_ManageError: ""
+              });
+              Reset(txt_CategoryName_1);
+              Reset(dd_CategoryType_1);
+            Text: ="Cancel edit"
+            Visible: =loc_ManageTab = "Categories" && !IsBlank(loc_EditCategoryId)
+            Width: =130
+            X: =215
+            Y: =238
+      - btn_CategoriesActive:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_CategoryView = "Active", Color.White, Color.Black)
+            Fill: =If(loc_CategoryView = "Active", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =34
+            OnSelect: |-
+              =UpdateContext({loc_CategoryView: "Active"})
+            Text: ="Active"
+            Visible: =loc_ManageTab = "Categories"
+            Width: =100
+            X: =20
+            Y: =265
+      - btn_CategoriesHidden:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_CategoryView = "Hidden", Color.White, Color.Black)
+            Fill: =If(loc_CategoryView = "Hidden", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =34
+            OnSelect: |-
+              =UpdateContext({loc_CategoryView: "Hidden"})
+            Text: ="Hidden"
+            Visible: =loc_ManageTab = "Categories"
+            Width: =100
+            X: =130
+            Y: =265
+      - gal_Categories_1:
+          Control: Gallery@2.15.0
+          Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+          Properties:
+            Height: =Max(180, Parent.Height - 320)
+            Items: |-
+              =Filter(
+                  col_Categories,
+                  If(
+                      loc_CategoryView = "Active",
+                      Upper(Text(IsActive)) = "TRUE",
+                      Upper(Text(IsActive)) = "FALSE"
+                  )
+              )
+            TemplateSize: =88
+            Visible: =loc_ManageTab = "Categories"
+            Width: =Parent.Width - 40
+            Y: =305
+          Children:
+            - lbl_CatItem_1:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =60
+                  OnSelect: =Select(Parent)
+                  Size: =15
+                  Text: =ThisItem.CategoryName & "  (" & ThisItem.CategoryType & ")"
+                  Width: =Parent.TemplateWidth - 250
+                  Y: =2
+            - btn_EditCat_1:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(56, 96, 178, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =UpdateContext({
+                        loc_EditCategoryId: ThisItem.CategoryId,
+                        loc_EditCategoryName: ThisItem.CategoryName,
+                        loc_EditCategoryType: ThisItem.CategoryType,
+                        loc_ManageError: ""
+                    });
+                    Reset(txt_CategoryName_1);
+                    Reset(dd_CategoryType_1);
+                  Text: ="Edit"
+                  Visible: =loc_CategoryView = "Active"
+                  Width: =90
+                  X: =Parent.TemplateWidth - 220
+                  Y: =20
+            - btn_DeactivateCat_1:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(180, 55, 55, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =IfError(
+                        Patch(
+                            tbl_Categories,
+                            LookUp(tbl_Categories, CategoryId = ThisItem.CategoryId),
+                            {IsActive: false}
+                        );
+                        Refresh(tbl_Categories);
+                        ClearCollect(col_Categories, tbl_Categories);
+                        Notify("Category hidden.", NotificationType.Success, 2000),
+                        UpdateContext({loc_ManageError: "Could not hide category."});
+                        Notify("Could not hide category.", NotificationType.Error)
+                    );
+                  Text: ="Hide"
+                  Visible: =loc_CategoryView = "Active"
+                  Width: =95
+                  X: =Parent.TemplateWidth - 115
+                  Y: =20
+            - btn_RestoreCategory:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(22, 130, 75, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =IfError(
+                        Patch(
+                            tbl_Categories,
+                            LookUp(tbl_Categories, CategoryId = ThisItem.CategoryId),
+                            {IsActive: true}
+                        );
+                        Refresh(tbl_Categories);
+                        ClearCollect(col_Categories, tbl_Categories);
+                        Notify("Category restored successfully.", NotificationType.Success, 2000),
+                        Notify("Could not restore category.", NotificationType.Error)
+                    );
+                  Text: ="Restore"
+                  Visible: =loc_CategoryView = "Hidden"
+                  Width: =100
+                  X: =Parent.TemplateWidth - 115
+                  Y: =20
+      - dd_BudgetCategory_1:
+          Control: Classic/DropDown@2.3.1
+          Properties:
+            Default: =Coalesce(LookUp(col_Categories, CategoryId = loc_EditBudgetCategoryId).CategoryName, "")
+            Font: =Font.'Open Sans'
+            Height: =44
+            Items: =Filter(col_Categories, CategoryType = "Expense" && Upper(Text(IsActive)) = "TRUE")
+            Items.Value: =CategoryName
+            Visible: =loc_ManageTab = "Budgets"
+            Width: =(Parent.Width - 60) * 0.50
+            X: =20
+            Y: =180
+            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
+      - txt_BudgetAmount:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            Default: =If(IsBlank(loc_EditBudgetAmount), "", Text(loc_EditBudgetAmount))
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            Height: =44
+            HintText: ="Monthly budget amount"
+            Visible: =loc_ManageTab = "Budgets"
+            Width: =195
+            X: =40 + (Parent.Width - 60) * 0.50
+            Y: =180
+      - txt_BudgetMonth:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            Default: =Coalesce(loc_EditBudgetMonth, Text(Today(), "[$-en-US]yyyy-mm"))
+            Font: =Font.'Open Sans'
+            Height: =44
+            HintText: ="Budget month (YYYY-MM, e.g. 2026-11)"
+            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
+            Visible: =loc_ManageTab = "Budgets"
+            Width: =190
+            X: =20
+            Y: =230
+      - btn_SaveBudget_1:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =Color.White
+            DisplayMode: =If(loc_IsSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =42
+            OnSelect: |-
+              =With(
+                  {bAmt: IfError(Value(txt_BudgetAmount.Text), Blank())},
+                  With(
+                      {bCatId: dd_BudgetCategory_1.Selected.CategoryId},
+                      With(
+                          {bMonth: Trim(txt_BudgetMonth.Text)},
+                          If(
+                              IsBlank(bCatId),
+                              UpdateContext({loc_ManageError: "Select an expense category."}),
+                              IsBlank(bAmt) || bAmt <= 0,
+                              UpdateContext({loc_ManageError: "Enter a budget amount greater than zero."}),
+                              !IsMatch(bMonth, "^[0-9]{4}-(0[1-9]|1[0-2])$", MatchOptions.Complete),
+                              UpdateContext({loc_ManageError: "Enter the month as YYYY-MM, for example 2026-11."}),
+                              With(
+                                  {existingBudget: LookUp(
+                                      col_Budgets,
+                                      CategoryId = bCatId && BudgetMonth = bMonth && Upper(Text(IsActive)) = "TRUE" && BudgetId <> loc_EditBudgetId
+                                  )},
+                                  If(
+                                      IsBlank(loc_EditBudgetId) && !IsBlank(existingBudget),
+                                      UpdateContext({loc_ManageError: "A budget already exists for this category and month. Edit the existing budget instead."}),
+                                      UpdateContext({loc_IsSaving: true, loc_ManageError: ""});
+                                      IfError(
+                                          If(
+                                              !IsBlank(loc_EditBudgetId),
+                                              Patch(
+                                                  tbl_Budgets,
+                                                  LookUp(tbl_Budgets, BudgetId = loc_EditBudgetId),
+                                                  {BudgetAmount: bAmt}
+                                              ),
+                                              Patch(
+                                                  tbl_Budgets,
+                                                  Defaults(tbl_Budgets),
+                                                  {
+                                                      BudgetId: "BUD" & Upper(Left(Substitute(Text(GUID()), "-", ""), 10)),
+                                                      CategoryId: bCatId,
+                                                      BudgetAmount: bAmt,
+                                                      BudgetPeriod: "Monthly",
+                                                      BudgetMonth: bMonth,
+                                                      IsActive: true
+                                                  }
+                                              )
+                                          );
+                                          Refresh(tbl_Budgets);
+                                          ClearCollect(col_Budgets, tbl_Budgets);
+                                          UpdateContext({
+                                              loc_IsSaving: false,
+                                              loc_EditBudgetId: "",
+                                              loc_EditBudgetCategoryId: "",
+                                              loc_EditBudgetAmount: Blank(),
+                                              loc_EditBudgetMonth: Text(Today(), "[$-en-US]yyyy-mm")
+                                          });
+                                          Reset(dd_BudgetCategory_1);
+                                          Reset(txt_BudgetAmount);
+                                          Reset(txt_BudgetMonth);
+                                          Notify("Budget saved successfully.", NotificationType.Success, 2000),
+                                          UpdateContext({loc_IsSaving: false, loc_ManageError: "Could not save the budget. Check the Excel table and BudgetMonth column."});
+                                          Notify("Could not save budget.", NotificationType.Error)
+                                      )
+                                  )
+                              )
+                          )
+                      )
+                  )
+              );
+            Text: =If(IsBlank(loc_EditBudgetId), "Save Budget", "Update Budget")
+            Visible: =loc_ManageTab = "Budgets"
+            Width: =180
+            X: =20
+            Y: =280
+      - btn_CancelBudgetEdit:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Height: =42
+            OnSelect: |-
+              =UpdateContext({
+                  loc_EditBudgetId: "",
+                  loc_EditBudgetCategoryId: "",
+                  loc_EditBudgetAmount: Blank(),
+                  loc_EditBudgetMonth: Text(Today(), "[$-en-US]yyyy-mm"),
+                  loc_ManageError: ""
+              });
+              Reset(dd_BudgetCategory_1);
+              Reset(txt_BudgetAmount);
+              Reset(txt_BudgetMonth);
+            Text: ="Cancel edit"
+            Visible: =loc_ManageTab = "Budgets" && !IsBlank(loc_EditBudgetId)
+            Width: =130
+            X: =215
+            Y: =280
+      - gal_Budgets:
+          Control: Gallery@2.15.0
+          Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+          Properties:
+            Height: =Max(160, Parent.Height - 390)
+            Items: |-
+              =SortByColumns(
+                  Filter(
+                      col_Budgets,
+                  Upper(Text(IsActive)) = "TRUE"
+                  ),
+                  "BudgetMonth",
+                  SortOrder.Descending
+              )
+            TemplateSize: =88
+            Visible: =loc_ManageTab = "Budgets"
+            Width: =Parent.Width - 40
+            Y: =340
+          Children:
+            - lbl_BudgetItem:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  Height: =60
+                  OnSelect: =Select(Parent)
+                  Size: =14
+                  Text: =Coalesce(LookUp(col_Categories, CategoryId = ThisItem.CategoryId).CategoryName, "Unknown category") & "  |  " & ThisItem.BudgetMonth & "  |  " & Text(ThisItem.BudgetAmount, "[$-en-IN]₹#,##0.00")
+                  Width: =Parent.TemplateWidth - 250
+                  X: =12
+                  Y: =10
+            - btn_EditBudget:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(56, 96, 178, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =UpdateContext({
+                        loc_EditBudgetId: ThisItem.BudgetId,
+                        loc_EditBudgetCategoryId: ThisItem.CategoryId,
+                        loc_EditBudgetAmount: ThisItem.BudgetAmount,
+                        loc_EditBudgetMonth: ThisItem.BudgetMonth,
+                        loc_ManageError: ""
+                    });
+                    Reset(dd_BudgetCategory_1);
+                    Reset(txt_BudgetAmount);
+                    Reset(txt_BudgetMonth);
+                  Text: ="Edit"
+                  Visible: =loc_AccountView = "Active"
+                  Width: =90
+                  X: =Parent.TemplateWidth - 220
+                  Y: =20
+            - btn_DeactivateBudget:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(180, 55, 55, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =IfError(
+                        Remove(
+                            tbl_Budgets,
+                            LookUp(tbl_Budgets, BudgetId = ThisItem.BudgetId)
+                        );
+                        Refresh(tbl_Budgets);
+                        ClearCollect(col_Budgets, tbl_Budgets);
+                        Notify("Budget deleted successfully.", NotificationType.Success, 2000),
+                        Notify("Could not delete budget.", NotificationType.Error)
+                    );
+                  Text: ="Delete"
+                  Width: =95
+                  X: =Parent.TemplateWidth - 115
+                  Y: =20
+      - txt_AccountName:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            Default: =Coalesce(loc_EditAccountName, "")
+            Font: =Font.'Open Sans'
+            Height: =44
+            HintText: ="Account name (e.g. HDFC Savings, Credit Card, Groww)"
+            Visible: =loc_ManageTab = "Accounts"
+            Width: =(Parent.Width - 60) * 0.50
+            X: =20
+            Y: =180
+      - dd_AccountType:
+          Control: Classic/DropDown@2.3.1
+          Properties:
+            Default: =Coalesce(loc_EditAccountType, "Cash")
+            Font: =Font.'Open Sans'
+            Height: =44
+            Items: =["Cash", "Bank", "Debit Card", "Credit Card", "Digital Wallet", "Fixed Deposit", "Investment", "Digital Asset", "Gift Card", "Other"]
+            Items.Value: =Value
+            Visible: =loc_ManageTab = "Accounts"
+            Width: =(Parent.Width - 60) * 0.30
+            X: =40 + (Parent.Width - 60) * 0.50
+            Y: =180
+      - btn_SaveAccount:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =Color.White
+            DisplayMode: =If(loc_IsSaving, DisplayMode.Disabled, DisplayMode.Edit)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =42
+            OnSelect: |-
+              =With(
+                  {
+                      accName: Trim(txt_AccountName.Text),
+                      accType: dd_AccountType.Selected.Value
+                  },
+                  If(
+                      IsBlank(accName),
+                      UpdateContext({loc_ManageError: "Enter an account name."}),
+                      !IsBlank(
+                          LookUp(
+                              col_Accounts,
+                              Lower(AccountName) = Lower(accName) &&
+                              Upper(Text(IsActive)) = "TRUE" &&
+                              AccountId <> loc_EditAccountId
+                          )
+                      ),
+                      UpdateContext({loc_ManageError: "An active account with this name already exists."}),
+                      UpdateContext({loc_IsSaving: true, loc_ManageError: ""});
+                      IfError(
+                          If(
+                              IsBlank(loc_EditAccountId),
+                              Patch(
+                                  tbl_Accounts,
+                                  Defaults(tbl_Accounts),
+                                  {
+                                      AccountId: Text(GUID()),
+                                      AccountName: accName,
+                                      AccountType: accType,
+                                      IsActive: true
+                                  }
+                              ),
+                              Patch(
+                                  tbl_Accounts,
+                                  LookUp(tbl_Accounts, AccountId = loc_EditAccountId),
+                                  {
+                                      AccountName: accName,
+                                      AccountType: accType
+                                  }
+                              )
+                          );
+                          Refresh(tbl_Accounts);
+                          ClearCollect(col_Accounts, tbl_Accounts);
+                          UpdateContext({
+                              loc_IsSaving: false,
+                              loc_EditAccountId: "",
+                              loc_EditAccountName: Blank(),
+                              loc_EditAccountType: Blank()
+                          });
+                          Reset(txt_AccountName);
+                          Reset(dd_AccountType);
+                          Notify("Account saved successfully.", NotificationType.Success, 2000),
+                          UpdateContext({loc_IsSaving: false, loc_ManageError: "Could not save the account. Check the Excel table and required columns."});
+                          Notify("Could not save account.", NotificationType.Error)
+                      )
+                  )
+              );
+            Text: =If(IsBlank(loc_EditAccountId), "Add Account", "Update Account")
+            Visible: =loc_ManageTab = "Accounts"
+            Width: =180
+            X: =20
+            Y: =238
+      - btn_CancelAccountEdit:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Height: =42
+            OnSelect: |-
+              =UpdateContext({
+                  loc_EditAccountId: "",
+                  loc_EditAccountName: Blank(),
+                  loc_EditAccountType: Blank(),
+                  loc_ManageError: ""
+              });
+              Reset(txt_AccountName);
+              Reset(dd_AccountType);
+            Text: ="Cancel edit"
+            Visible: =loc_ManageTab = "Accounts" && !IsBlank(loc_EditAccountId)
+            Width: =130
+            X: =215
+            Y: =238
+      - btn_AccountsActive:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_AccountView = "Active", Color.White, Color.Black)
+            Fill: =If(loc_AccountView = "Active", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =34
+            OnSelect: |-
+              =UpdateContext({loc_AccountView: "Active"})
+            Text: ="Active"
+            Visible: =loc_ManageTab = "Accounts"
+            Width: =100
+            X: =20
+            Y: =265
+      - btn_AccountsHidden:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_AccountView = "Hidden", Color.White, Color.Black)
+            Fill: =If(loc_AccountView = "Hidden", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
+            Font: =Font.'Open Sans'
+            Height: =34
+            OnSelect: |-
+              =UpdateContext({loc_AccountView: "Hidden"})
+            Text: ="Hidden"
+            Visible: =loc_ManageTab = "Accounts"
+            Width: =100
+            X: =130
+            Y: =265
+      - gal_Accounts:
+          Control: Gallery@2.15.0
+          Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+          Properties:
+            Height: =Max(180, Parent.Height - 320)
+            Items: |-
+              =Filter(
+                  col_Accounts,
+                  If(
+                      loc_AccountView = "Active",
+                      Upper(Text(IsActive)) = "TRUE",
+                      Upper(Text(IsActive)) = "FALSE"
+                  )
+              )
+            TemplateSize: =88
+            Visible: =loc_ManageTab = "Accounts"
+            Width: =Parent.Width - 40
+            Y: =305
+          Children:
+            - lbl_AccItem:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  Height: =60
+                  OnSelect: =Select(Parent)
+                  Size: =14
+                  Text: =ThisItem.AccountName & "  |  " & ThisItem.AccountType
+                  Width: =Parent.TemplateWidth - 250
+                  X: =12
+                  Y: =10
+            - btn_EditAccount:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(56, 96, 178, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =UpdateContext({
+                        loc_EditAccountId: ThisItem.AccountId,
+                        loc_EditAccountName: ThisItem.AccountName,
+                        loc_EditAccountType: ThisItem.AccountType,
+                        loc_ManageError: ""
+                    });
+                    Reset(txt_AccountName);
+                    Reset(dd_AccountType);
+                  Text: ="Edit"
+                  Width: =90
+                  X: =Parent.TemplateWidth - 220
+                  Y: =20
+            - btn_DeactivateAcc:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(180, 55, 55, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =IfError(
+                        Patch(
+                            tbl_Accounts,
+                            LookUp(tbl_Accounts, AccountId = ThisItem.AccountId),
+                            {IsActive: false}
+                        );
+                        Refresh(tbl_Accounts);
+                        ClearCollect(col_Accounts, tbl_Accounts);
+                        Notify("Account hidden.", NotificationType.Success, 2000),
+                        UpdateContext({loc_ManageError: "Could not hide account."});
+                        Notify("Could not hide account.", NotificationType.Error)
+                    );
+                  Text: ="Hide"
+                  Visible: =loc_AccountView = "Active"
+                  Width: =95
+                  X: =Parent.TemplateWidth - 115
+                  Y: =20
+            - btn_RestoreAccount:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  Color: =Color.White
+                  Fill: =RGBA(22, 130, 75, 1)
+                  Height: =42
+                  OnSelect: |-
+                    =IfError(
+                        Patch(
+                            tbl_Accounts,
+                            LookUp(tbl_Accounts, AccountId = ThisItem.AccountId),
+                            {IsActive: true}
+                        );
+                        Refresh(tbl_Accounts);
+                        ClearCollect(col_Accounts, tbl_Accounts);
+                        Notify("Account restored successfully.", NotificationType.Success, 2000),
+                        Notify("Could not restore account.", NotificationType.Error)
+                    );
+                  Text: ="Restore"
+                  Visible: =loc_AccountView = "Hidden"
+                  Width: =100
+                  X: =Parent.TemplateWidth - 115
+                  Y: =20

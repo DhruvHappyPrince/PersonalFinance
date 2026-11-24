@@ -1,0 +1,565 @@
+Screens:
+  scr_TransactionForm:
+    Properties:
+      Fill: =RGBA(248, 249, 252, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =UpdateContext({
+            loc_IsSaving: false,
+            loc_ShowDeletePopup: false,
+            loc_IsEditMode: !IsBlank(gbl_SelectedTx.TransactionId),
+            loc_TxType: Coalesce(gbl_SelectedTx.TransactionType, "Expense"),
+            loc_ErrorMsg: ""
+        });
+        Refresh(tbl_Categories);
+        Refresh(tbl_Accounts);
+        ClearCollect(col_Categories, tbl_Categories);
+        ClearCollect(col_Accounts, tbl_Accounts);
+    Children:
+      - lbl_FormTitle:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Size: =24
+            Text: |-
+              =If(
+                  loc_IsEditMode,
+                  "Edit Transaction",
+                  "New Transaction"
+              )
+            Width: =640
+            Y: =12
+      - btn_CancelTx:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scr_Home, ScreenTransition.UnCover)
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Text: ="Cancel"
+            Width: =155
+            X: =483
+            Y: =12
+      - lbl_TypePrompt:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Text: ="Transaction type (required)"
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =72
+      - btn_TypeExpense:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            Fill: |-
+              =If(
+                  loc_TxType = "Expense",
+                  RGBA(56, 96, 178, 1),
+                  RGBA(230, 233, 240, 1)
+              )
+            Font: =Font.'Open Sans'
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =UpdateContext({
+                  loc_TxType: "Expense",
+                  loc_ErrorMsg: ""
+              });
+              Reset(dd_Category);
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Text: ="Expense"
+            Y: =98
+      - btn_TypeIncome:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            Fill: |-
+              =If(
+                  loc_TxType = "Income",
+                  RGBA(56, 96, 178, 1),
+                  RGBA(230, 233, 240, 1)
+              )
+            Font: =Font.'Open Sans'
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =UpdateContext({
+                  loc_TxType: "Income",
+                  loc_ErrorMsg: ""
+              });
+              Reset(dd_Category);
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Text: ="Income"
+            X: =358
+            Y: =98
+      - lbl_AmountPrompt:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Text: ="Amount (required)"
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =165
+      - txt_Amount:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Default: |-
+              =If(
+                  loc_IsEditMode && gbl_SelectedTx.Amount > 0,
+                  Text(gbl_SelectedTx.Amount),
+                  ""
+              )
+            Font: =Font.'Open Sans'
+            Format: =TextFormat.Number
+            HintText: ="Enter amount"
+            HoverBorderColor: =RGBA(0, 18, 107, 1)
+            HoverFill: =RGBA(186, 202, 226, 1)
+            OnChange: |-
+              =UpdateContext({loc_ErrorMsg: ""})
+            Y: =203
+      - lbl_DatePrompt:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Text: ="Transaction date (required)"
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =319
+      - dp_TransactionDate:
+          Control: Classic/DatePicker@2.6.0
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            DefaultDate: |-
+              =If(
+                  loc_IsEditMode &&
+                  !IsBlank(gbl_SelectedTx.TransactionDate),
+                  DateValue(Text(gbl_SelectedTx.TransactionDate)),
+                  Today()
+              )
+            Font: =Font.'Open Sans'
+            IconBackground: =RGBA(56, 96, 178, 1)
+            IconFill: =RGBA(255, 255, 255, 1)
+            OnChange: |-
+              =UpdateContext({loc_ErrorMsg: ""})
+            Y: =357
+      - lbl_CategoryPrompt:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Text: ="Category (required)"
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =442
+      - dd_Category:
+          Control: Classic/DropDown@2.3.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            ChevronBackground: =RGBA(56, 96, 178, 1)
+            ChevronFill: =RGBA(255, 255, 255, 1)
+            ChevronHoverBackground: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            ChevronHoverFill: =RGBA(255, 255, 255, 1)
+            Default: |-
+              =Coalesce(
+                  LookUp(
+                      col_Categories,
+                      CategoryId = gbl_SelectedTx.CategoryId && CategoryType = loc_TxType
+                  ).CategoryName,
+                  First(
+                      Filter(
+                          col_Categories,
+                          CategoryType = loc_TxType && Upper(Text(IsActive)) = "TRUE"
+                      )
+                  ).CategoryName,
+                  ""
+              )
+            Font: =Font.'Open Sans'
+            HoverFill: =RGBA(186, 202, 226, 1)
+            Items: |-
+              =Filter(
+                  col_Categories,
+                  CategoryType = loc_TxType &&
+                  (Upper(Text(IsActive)) = "TRUE" || CategoryId = gbl_SelectedTx.CategoryId)
+              )
+            Items.Value: =CategoryName
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(0, 18, 107, 1)
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Y: =480
+      - lbl_AccountPrompt:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Text: ="Paid through / Account (required)"
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =559
+      - dd_Account:
+          Control: Classic/DropDown@2.3.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            ChevronBackground: =RGBA(56, 96, 178, 1)
+            ChevronFill: =RGBA(255, 255, 255, 1)
+            ChevronHoverBackground: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            ChevronHoverFill: =RGBA(255, 255, 255, 1)
+            Default: |-
+              =Coalesce(
+                  LookUp(
+                      col_Accounts,
+                      AccountId = gbl_SelectedTx.AccountId
+                  ).AccountName,
+                  First(
+                      Filter(col_Accounts, Upper(Text(IsActive)) = "TRUE")
+                  ).AccountName,
+                  ""
+              )
+            Font: =Font.'Open Sans'
+            HoverFill: =RGBA(186, 202, 226, 1)
+            Items: |-
+              =Filter(
+                  col_Accounts,
+                  Upper(Text(IsActive)) = "TRUE" || AccountId = gbl_SelectedTx.AccountId
+              )
+            Items.Value: =AccountName
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(0, 18, 107, 1)
+            SelectionColor: =RGBA(255, 255, 255, 1)
+            SelectionFill: =RGBA(56, 96, 178, 1)
+            Y: =597
+      - lbl_NotesPrompt:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Text: ="Notes (optional)"
+            Width: =Parent.Width - 40
+            X: =20
+            Y: =664
+      - txt_Notes:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Default: =gbl_SelectedTx.Notes
+            Font: =Font.'Open Sans'
+            HintText: ="Enter transaction notes..."
+            HoverBorderColor: =RGBA(0, 18, 107, 1)
+            HoverFill: =RGBA(186, 202, 226, 1)
+            Mode: =TextMode.MultiLine
+            Y: =702
+      - lbl_ValidationMsg:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 18, 107, 1)
+            Color: =Color.Red
+            Font: =Font.'Open Sans'
+            Text: =loc_ErrorMsg
+            Visible: =!IsBlank(loc_ErrorMsg)
+            Y: =793
+      - btn_SaveTx:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            DisplayMode: |-
+              =If(
+                  loc_IsSaving,
+                  DisplayMode.Disabled,
+                  DisplayMode.Edit
+              )
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |+
+              =
+              With(
+                  {
+                      amt: IfError(Value(txt_Amount.Text), Blank()),
+                      selectedCatId: dd_Category.Selected.CategoryId,
+                      selectedAccId: dd_Account.Selected.AccountId,
+                      txId: If(
+                          loc_IsEditMode,
+                          gbl_SelectedTx.TransactionId,
+                          Text(GUID())
+                      )
+                  },
+                  If(
+                      IsBlank(txt_Amount.Text) ||
+                      IsBlank(amt) ||
+                      amt <= 0,
+
+                      UpdateContext({
+                          loc_ErrorMsg: "Enter an amount greater than 0."
+                      }),
+
+                      IsBlank(dp_TransactionDate.SelectedDate),
+
+                      UpdateContext({
+                          loc_ErrorMsg: "Select a transaction date."
+                      }),
+
+                      IsBlank(selectedCatId),
+
+                      UpdateContext({
+                          loc_ErrorMsg: "Select a valid category."
+                      }),
+
+                      IsBlank(selectedAccId),
+
+                      UpdateContext({
+                          loc_ErrorMsg: "Select a valid account."
+                      }),
+
+                      UpdateContext({
+                          loc_IsSaving: true,
+                          loc_ErrorMsg: ""
+                      });
+
+                      IfError(
+                          If(
+                              loc_IsEditMode,
+
+                              Patch(
+                                  tbl_Transactions,
+                                  LookUp(
+                                      tbl_Transactions,
+                                      TransactionId = txId
+                                  ),
+                                  {
+                                      TransactionType: loc_TxType,
+                                      Amount: amt,
+                                      TransactionDate: dp_TransactionDate.SelectedDate,
+                                      CategoryId: selectedCatId,
+                                      AccountId: selectedAccId,
+                                      Notes: Trim(txt_Notes.Text)
+                                  }
+                              ),
+
+                              Patch(
+                                  tbl_Transactions,
+                                  Defaults(tbl_Transactions),
+                                  {
+                                      TransactionId: txId,
+                                      TransactionType: loc_TxType,
+                                      Amount: amt,
+                                      TransactionDate: dp_TransactionDate.SelectedDate,
+                                      CategoryId: selectedCatId,
+                                      AccountId: selectedAccId,
+                                      Notes: Trim(txt_Notes.Text)
+                                  }
+                              )
+                          );
+
+                          Refresh(tbl_Transactions);
+                          ClearCollect(
+                              col_Transactions,
+                              tbl_Transactions
+                          );
+
+                          UpdateContext({
+                              loc_IsSaving: false
+                          });
+
+                          Notify(
+                              "Transaction saved successfully.",
+                              NotificationType.Success,
+                              2000
+                          );
+
+                          Navigate(
+                              scr_Home,
+                              ScreenTransition.UnCover
+                          ),
+
+                          UpdateContext({
+                              loc_IsSaving: false,
+                              loc_ErrorMsg: "Could not save transaction. Check your connection or Excel table."
+                          });
+
+                          Notify(
+                              "Could not save transaction.",
+                              NotificationType.Error
+                          )
+                      )
+                  )
+              );
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Text: |-
+              =If(
+                  loc_IsSaving,
+                  "Saving...",
+                  "Save Transaction"
+              )
+            X: =108
+            Y: =830
+      - btn_DeleteTx:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(166, 166, 166, 1)
+            Fill: =Color.Red
+            Font: =Font.'Open Sans'
+            HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: |-
+              =UpdateContext({
+                  loc_ShowDeletePopup: true
+              });
+            PressedBorderColor: =Self.Fill
+            PressedColor: =Self.Fill
+            PressedFill: =Self.Color
+            Text: ="Delete Transaction"
+            Visible: =loc_IsEditMode
+            X: =96
+            Y: =945
+      - con_DeletePopup:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Height: =332
+            Visible: =loc_ShowDeletePopup
+            Width: =640
+            Y: =400
+          Children:
+            - lbl_DeleteMessage:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Font: =Font.'Open Sans'
+                  Text: ="Are you sure you want to delete this transaction?"
+                  Width: =500
+                  X: =31
+                  Y: =130
+            - loc_ShowDeletePopup:
+                Control: Label@2.5.1
+                Properties:
+                  BorderColor: =RGBA(0, 18, 107, 1)
+                  Font: =Font.'Open Sans'
+                  Text: ="Delete Transaction?"
+                  Width: =500
+                  X: =31
+                  Y: =43
+            - btn_ConfirmDelete:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderColor: =ColorFade(Self.Fill, -15%)
+                  Color: =RGBA(255, 255, 255, 1)
+                  DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                  DisplayMode: |-
+                    =If(
+                        loc_IsSaving,
+                        DisplayMode.Disabled,
+                        DisplayMode.Edit
+                    )
+                  Fill: =RGBA(56, 96, 178, 1)
+                  Font: =Font.'Open Sans'
+                  HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                  HoverColor: =RGBA(255, 255, 255, 1)
+                  HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                  OnSelect: |+
+                    =
+                    UpdateContext({
+                        loc_IsSaving: true
+                    });
+
+                    IfError(
+                        Remove(
+                            tbl_Transactions,
+                            LookUp(
+                                tbl_Transactions,
+                                TransactionId = gbl_SelectedTx.TransactionId
+                            )
+                        );
+
+                        Refresh(tbl_Transactions);
+                        ClearCollect(
+                            col_Transactions,
+                            tbl_Transactions
+                        );
+
+                        UpdateContext({
+                            loc_ShowDeletePopup: false,
+                            loc_IsSaving: false
+                        });
+
+                        Notify(
+                            "Transaction deleted successfully.",
+                            NotificationType.Success,
+                            2000
+                        );
+
+                        Navigate(
+                            scr_Home,
+                            ScreenTransition.UnCover
+                        ),
+
+                        UpdateContext({
+                            loc_IsSaving: false
+                        });
+
+                        Notify(
+                            "Failed to delete transaction.",
+                            NotificationType.Error
+                        )
+                    );
+                  PressedBorderColor: =Self.Fill
+                  PressedColor: =Self.Fill
+                  PressedFill: =Self.Color
+                  Text: ="Confirm Delete"
+                  Width: =200
+                  X: =331
+                  Y: =240
+            - btn_CancelDelete:
+                Control: Classic/Button@2.2.0
+                Properties:
+                  BorderColor: =ColorFade(Self.Fill, -15%)
+                  Color: =RGBA(255, 255, 255, 1)
+                  DisabledBorderColor: =RGBA(166, 166, 166, 1)
+                  Fill: =RGBA(56, 96, 178, 1)
+                  Font: =Font.'Open Sans'
+                  HoverBorderColor: =ColorFade(Self.BorderColor, 20%)
+                  HoverColor: =RGBA(255, 255, 255, 1)
+                  HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+                  OnSelect: |-
+                    =UpdateContext({
+                        loc_ShowDeletePopup: false
+                    });
+                  PressedBorderColor: =Self.Fill
+                  PressedColor: =Self.Fill
+                  PressedFill: =Self.Color
+                  Text: ="Keep"
+                  X: =16
+                  Y: =240
