@@ -354,6 +354,7 @@ Screens:
           Control: Classic/DropDown@2.3.1
           Properties:
             Default: =Coalesce(LookUp(col_Categories, CategoryId = loc_EditBudgetCategoryId).CategoryName, "")
+            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
             Font: =Font.'Open Sans'
             Height: =44
             Items: =Filter(col_Categories, CategoryType = "Expense" && Upper(Text(IsActive)) = "TRUE")
@@ -362,7 +363,6 @@ Screens:
             Width: =(Parent.Width - 60) * 0.50
             X: =20
             Y: =180
-            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
       - txt_BudgetAmount:
           Control: Classic/TextInput@2.3.2
           Properties:
@@ -379,10 +379,10 @@ Screens:
           Control: Classic/TextInput@2.3.2
           Properties:
             Default: =Coalesce(loc_EditBudgetMonth, Text(Today(), "[$-en-US]yyyy-mm"))
+            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
             Font: =Font.'Open Sans'
             Height: =44
             HintText: ="Budget month (YYYY-MM, e.g. 2026-11)"
-            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
             Visible: =loc_ManageTab = "Budgets"
             Width: =190
             X: =20

@@ -1,0 +1,747 @@
+Screens:
+  scr_Analytics:
+    Properties:
+      Fill: =RGBA(248, 249, 252, 1)
+      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
+      OnVisible: |-
+        =UpdateContext({
+            loc_AnalyticsMode: "Calendar",
+            loc_SelectedMonth: Month(Today()),
+            loc_SelectedYear: Year(Today()),
+            loc_SelectedDay: Today()
+        });
+        Refresh(tbl_Transactions);
+        Refresh(tbl_Categories);
+        Refresh(tbl_Accounts);
+        ClearCollect(col_Transactions, tbl_Transactions);
+        ClearCollect(col_Categories, tbl_Categories);
+        ClearCollect(col_Accounts, tbl_Accounts);
+    Children:
+      - lbl_AnalyticsTitle:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Height: =45
+            Size: =24
+            Text: ="Financial Analytics"
+            Width: =450
+            X: =20
+            Y: =15
+      - lbl_AnalyticsSubtitle:
+          Control: Label@2.5.1
+          Properties:
+            Color: =RGBA(100, 100, 100, 1)
+            Font: =Font.'Open Sans'
+            Height: =25
+            Size: =11
+            Text: ="Track your income, expenses and spending patterns"
+            Width: =580
+            X: =20
+            Y: =55
+      - btn_BackFromAnalytics:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255, 255, 255, 1)
+            Fill: =RGBA(56, 96, 178, 1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            HoverFill: =ColorFade(RGBA(56, 96, 178, 1), -20%)
+            OnSelect: =Navigate(scr_Home, ScreenTransition.UnCover)
+            Text: ="Back"
+            Width: =110
+            X: =500
+            Y: =20
+      - btn_ModeCalendar:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_AnalyticsMode = "Calendar", RGBA(255,255,255,1), RGBA(56,96,178,1))
+            Fill: =If(loc_AnalyticsMode = "Calendar", RGBA(56,96,178,1), RGBA(230,233,240,1))
+            Font: =Font.'Open Sans'
+            Height: =42
+            OnSelect: |-
+              =UpdateContext({
+                  loc_AnalyticsMode: "Calendar"
+              })
+            Text: ="Calendar"
+            Width: =180
+            X: =20
+            Y: =100
+      - btn_ModeCharts:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =If(loc_AnalyticsMode = "Charts", RGBA(255,255,255,1), RGBA(56,96,178,1))
+            Fill: =If(loc_AnalyticsMode = "Charts", RGBA(56,96,178,1), RGBA(230,233,240,1))
+            Font: =Font.'Open Sans'
+            Height: =42
+            OnSelect: |-
+              =UpdateContext({
+                  loc_AnalyticsMode: "Charts"
+              })
+            Text: ="Charts & Reports"
+            Width: =180
+            X: =210
+            Y: =100
+      - btn_PrevMonth:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =RGBA(56,96,178,1)
+            Fill: =RGBA(230,233,240,1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            OnSelect: |-
+              =With(
+                  {
+                      d: DateAdd(
+                          Date(loc_SelectedYear, loc_SelectedMonth, 1),
+                          -1,
+                          TimeUnit.Months
+                      )
+                  },
+                  UpdateContext({
+                      loc_SelectedMonth: Month(d),
+                      loc_SelectedYear: Year(d),
+                      loc_SelectedDay: Date(Year(d), Month(d), 1)
+                  })
+              )
+            Text: ="< Previous"
+            Width: =115
+            X: =20
+            Y: =160
+      - lbl_MonthYear:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Height: =38
+            Size: =16
+            Text: =Text(Date(loc_SelectedYear, loc_SelectedMonth, 1), "[$-en-US]mmmm yyyy")
+            Width: =300
+            X: =155
+            Y: =160
+      - btn_NextMonth:
+          Control: Classic/Button@2.2.0
+          Properties:
+            Color: =RGBA(56,96,178,1)
+            Fill: =RGBA(230,233,240,1)
+            Font: =Font.'Open Sans'
+            Height: =38
+            OnSelect: |-
+              =With(
+                  {
+                      d: DateAdd(
+                          Date(loc_SelectedYear, loc_SelectedMonth, 1),
+                          1,
+                          TimeUnit.Months
+                      )
+                  },
+                  UpdateContext({
+                      loc_SelectedMonth: Month(d),
+                      loc_SelectedYear: Year(d),
+                      loc_SelectedDay: Date(Year(d), Month(d), 1)
+                  })
+              )
+            Text: ="Next >"
+            Width: =115
+            X: =475
+            Y: =160
+      - lbl_CalendarHeading:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =35
+            Size: =16
+            Text: ="Monthly Calendar"
+            Visible: =loc_AnalyticsMode = "Calendar"
+            Width: =400
+            X: =20
+            Y: =210
+      - lbl_Weekdays:
+          Control: Label@2.5.1
+          Properties:
+            Align: =Align.Center
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Height: =25
+            Size: =10
+            Text: ="SUN       MON       TUE       WED       THU       FRI       SAT"
+            Visible: =loc_AnalyticsMode = "Calendar"
+            Width: =600
+            X: =20
+            Y: =245
+      - gal_CalendarDays:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =320
+            Items: |-
+              =With(
+                  {
+                      daysInMonth: Day(
+                          DateAdd(
+                              DateAdd(
+                                  Date(loc_SelectedYear, loc_SelectedMonth, 1),
+                                  1,
+                                  TimeUnit.Months
+                              ),
+                              -1,
+                              TimeUnit.Days
+                          )
+                      )
+                  },
+                  ForAll(
+                      Sequence(daysInMonth),
+                      {
+                          CalDate: Date(
+                              loc_SelectedYear,
+                              loc_SelectedMonth,
+                              Value
+                          )
+                      }
+                  )
+              )
+            OnSelect: |-
+              =UpdateContext({
+                  loc_SelectedDay: ThisItem.CalDate
+              })
+            ShowScrollbar: =false
+            TemplatePadding: =3
+            TemplateSize: =75
+            Visible: =loc_AnalyticsMode = "Calendar"
+            Width: =600
+            WrapCount: =7
+            X: =20
+            Y: =275
+          Children:
+            - lbl_CalDayNum:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Fill: =If(ThisItem.CalDate = loc_SelectedDay, RGBA(210,225,250,1), RGBA(255,255,255,1))
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Bold
+                  Height: =30
+                  OnSelect: =Select(Parent)
+                  Size: =12
+                  Text: =Text(Day(ThisItem.CalDate))
+                  Width: =Parent.TemplateWidth - 6
+                  X: =3
+                  Y: =3
+            - lbl_CalDayNet:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Center
+                  Color: =If(Self.Text = "", RGBA(100,100,100,1), If(Left(Self.Text,1) = "+", RGBA(0,140,70,1), RGBA(210,60,60,1)))
+                  Font: =Font.'Open Sans'
+                  Height: =25
+                  OnSelect: =Select(Parent)
+                  Size: =8
+                  Text: |-
+                    =With(
+                        {
+                            dInc: Sum(
+                                Filter(
+                                    col_Transactions,
+                                    TransactionType = "Income" &&
+                                    DateValue(Text(TransactionDate)) = ThisItem.CalDate
+                                ),
+                                Amount
+                            ),
+                            dExp: Sum(
+                                Filter(
+                                    col_Transactions,
+                                    TransactionType = "Expense" &&
+                                    DateValue(Text(TransactionDate)) = ThisItem.CalDate
+                                ),
+                                Amount
+                            )
+                        },
+                        If(
+                            dInc - dExp = 0,
+                            "",
+                            If(dInc - dExp > 0, "+", "-") &
+                            Text(Abs(dInc - dExp), "#,##0")
+                        )
+                    )
+                  Width: =Parent.TemplateWidth - 6
+                  X: =3
+                  Y: =33
+      - lbl_SelectedDayTitle:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Height: =35
+            Size: =15
+            Text: ="Transactions - " & Text(loc_SelectedDay, "dd mmmm yyyy")
+            Visible: =loc_AnalyticsMode = "Calendar"
+            Width: =580
+            X: =20
+            Y: =610
+      - gal_DayTransactions:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =280
+            Items: |-
+              =SortByColumns(
+                  Filter(
+                      col_Transactions,
+                      DateValue(Text(TransactionDate)) = loc_SelectedDay
+                  ),
+                  "TransactionDate",
+                  SortOrder.Descending
+              )
+            TemplatePadding: =4
+            TemplateSize: =65
+            Visible: =loc_AnalyticsMode = "Calendar"
+            Width: =600
+            X: =20
+            Y: =650
+          Children:
+            - lbl_DayTxTitle:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =30
+                  Size: =11
+                  Text: |-
+                    =Coalesce(
+                        LookUp(
+                            col_Categories As cat,
+                            cat.CategoryId = ThisItem.CategoryId,
+                            cat.CategoryName
+                        ),
+                        "Uncategorized"
+                    ) &
+                    If(
+                        !IsBlank(ThisItem.Notes),
+                        " - " & ThisItem.Notes,
+                        ""
+                    )
+                  Width: =390
+                  X: =5
+                  Y: =5
+            - lbl_DayTxType:
+                Control: Label@2.5.1
+                Properties:
+                  Color: =RGBA(110,110,110,1)
+                  Font: =Font.'Open Sans'
+                  Height: =22
+                  Size: =9
+                  Text: =ThisItem.TransactionType
+                  Width: =200
+                  X: =5
+                  Y: =34
+            - lbl_DayTxAmount:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Color: =If(ThisItem.TransactionType = "Income", RGBA(0,140,70,1), RGBA(210,60,60,1))
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Bold
+                  Height: =35
+                  Size: =12
+                  Text: |-
+                    =If(ThisItem.TransactionType = "Expense", "-", "+") &
+                    Coalesce(gbl_CurrencySymbol, "₹") &
+                    Text(ThisItem.Amount, "#,##0.00")
+                  Width: =170
+                  X: =420
+                  Y: =12
+      - lbl_ReportsHeading:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Bold
+            Height: =40
+            Size: =18
+            Text: ="Monthly Reports"
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =500
+            X: =20
+            Y: =215
+      - lbl_CategoryHeading:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =35
+            Size: =14
+            Text: ="Expense by Category"
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =400
+            X: =20
+            Y: =265
+      - gal_CategoryExpenses:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =260
+            Items: |-
+              =AddColumns(
+                  GroupBy(
+                      AddColumns(
+                          Filter(
+                              col_Transactions,
+                              TransactionType = "Expense" &&
+                              Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                              Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                          ),
+                          CatName,
+                          Coalesce(
+                              IfError(
+                                  LookUp(col_Categories, CategoryId = ThisRecord.CategoryId).CategoryName,
+                                  Blank()
+                              ),
+                              "Uncategorized"
+                          )
+                      ),
+                      CatName,
+                      GrpTx
+                  ),
+                  TotalSpent,
+                  Sum(GrpTx, Value(Amount))
+              )
+            TemplatePadding: =3
+            TemplateSize: =65
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =600
+            X: =20
+            Y: =305
+          Children:
+            - lbl_CategoryName:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =25
+                  Size: =11
+                  Text: =ThisItem.CatName
+                  Width: =300
+                  X: =5
+                  Y: =2
+            - lbl_CategoryAmount:
+                Control: Label@2.5.1
+                Properties:
+                  Align: =Align.Right
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Bold
+                  Height: =25
+                  Size: =11
+                  Text: =Coalesce(gbl_CurrencySymbol, "₹") & Text(ThisItem.TotalSpent, "#,##0.00")
+                  Width: =200
+                  X: =380
+                  Y: =2
+            - rect_CategoryBar:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =RGBA(56,96,178,1)
+                  Height: =12
+                  Width: |-
+                    =With(
+                        {
+                            maxSpent: Max(
+                                AddColumns(
+                                    GroupBy(
+                                        AddColumns(
+                                            Filter(
+                                                col_Transactions,
+                                                TransactionType = "Expense" &&
+                                                Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                                                Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                                            ),
+                                            CatName,
+                                            Coalesce(
+                                                IfError(
+                                                    LookUp(col_Categories, CategoryId = ThisRecord.CategoryId).CategoryName,
+                                                    Blank()
+                                                ),
+                                                "Uncategorized"
+                                            )
+                                        ),
+                                        CatName,
+                                        GrpTx
+                                    ),
+                                    TotalSpent,
+                                    Sum(GrpTx, Value(Amount))
+                                ),
+                                TotalSpent
+                            )
+                        },
+                        If(
+                            maxSpent = 0,
+                            0,
+                            350 * Value(ThisItem.TotalSpent) / maxSpent
+                        )
+                    )
+                  X: =5
+                  Y: =34
+      - lbl_CashFlowHeading:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =35
+            Size: =14
+            Text: ="Monthly Cash Flow"
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =400
+            X: =20
+            Y: =837
+      - gal_MonthlyCashFlow:
+          Control: Gallery@2.15.0
+          Variant: Vertical
+          Properties:
+            Height: =145
+            Items: |-
+              =Table(
+                  {
+                      Label: "Income",
+                      Total: Sum(
+                          Filter(
+                              col_Transactions,
+                              TransactionType = "Income" &&
+                              Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                              Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                          ),
+                          Amount
+                      )
+                  },
+                  {
+                      Label: "Expense",
+                      Total: Sum(
+                          Filter(
+                              col_Transactions,
+                              TransactionType = "Expense" &&
+                              Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                              Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                          ),
+                          Amount
+                      )
+                  }
+              )
+            TemplateSize: =65
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =600
+            X: =20
+            Y: =860
+          Children:
+            - lbl_CashFlowType:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Semibold
+                  Height: =25
+                  Size: =11
+                  Text: =ThisItem.Label
+                  Width: =120
+                  X: =5
+                  Y: =5
+            - lbl_CashFlowAmount:
+                Control: Label@2.5.1
+                Properties:
+                  Font: =Font.'Open Sans'
+                  FontWeight: =FontWeight.Bold
+                  Height: =25
+                  Size: =11
+                  Text: =Coalesce(gbl_CurrencySymbol, "₹") & Text(ThisItem.Total, "#,##0.00")
+                  Width: =200
+                  X: =140
+                  Y: =5
+            - rect_CashFlowBar:
+                Control: Rectangle@2.3.0
+                Properties:
+                  Fill: =If(ThisItem.Label = "Income", RGBA(0,160,90,1), RGBA(220,75,75,1))
+                  Height: =12
+                  Width: |-
+                    =With(
+                        {
+                            mInc: Sum(
+                                Filter(
+                                    col_Transactions,
+                                    TransactionType = "Income" &&
+                                    Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                                    Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                                ),
+                                Value(Amount)
+                            ),
+                            mExp: Sum(
+                                Filter(
+                                    col_Transactions,
+                                    TransactionType = "Expense" &&
+                                    Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                                    Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                                ),
+                                Value(Amount)
+                            )
+                        },
+                        With(
+                            { maxCashFlow: Max(mInc, mExp) },
+                            If(
+                                maxCashFlow = 0,
+                                0,
+                                350 * Value(ThisItem.Total) / maxCashFlow
+                            )
+                        )
+                    )
+                  X: =5
+                  Y: =36
+      - lbl_ExportHeading:
+          Control: Label@2.5.1
+          Properties:
+            Font: =Font.'Open Sans'
+            FontWeight: =FontWeight.Semibold
+            Height: =35
+            Size: =14
+            Text: ="Export Monthly Transactions"
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =400
+            Y: =1019
+      - btn_ExportCsv:
+          Control: Classic/Button@2.2.0
+          Properties:
+            BorderColor: =ColorFade(Self.Fill, -15%)
+            Color: =RGBA(255,255,255,1)
+            Fill: =RGBA(56,96,178,1)
+            Font: =Font.'Open Sans'
+            Height: =42
+            HoverFill: =ColorFade(RGBA(56,96,178,1), -20%)
+            OnSelect: |-
+              =Set(
+                  gbl_CsvExportText,
+                  "Date,Type,Category,Account,Amount,Notes" & Char(10) &
+                  Concat(
+                      Filter(
+                          col_Transactions,
+                          Month(DateValue(Text(TransactionDate))) = loc_SelectedMonth &&
+                          Year(DateValue(Text(TransactionDate))) = loc_SelectedYear
+                      ),
+                      Text(DateValue(Text(ThisRecord.TransactionDate)), "[$-en-US]yyyy-mm-dd") & "," &
+                      ThisRecord.TransactionType & "," &
+                      """" &
+                      Substitute(
+                          Coalesce(
+                              IfError(
+                                  LookUp(col_Categories, CategoryId = ThisRecord.CategoryId).CategoryName,
+                                  Blank()
+                              ),
+                              "Uncategorized"
+                          ),
+                          """",
+                          """"""
+                      ) & """," &
+                      """" &
+                      Substitute(
+                          Coalesce(
+                              IfError(
+                                  LookUp(col_Accounts, AccountId = ThisRecord.AccountId).AccountName,
+                                  Blank()
+                              ),
+                              "Account"
+                          ),
+                          """",
+                          """"""
+                      ) & """," &
+                      Text(Value(ThisRecord.Amount), "0.00") & "," &
+                      """" &
+                      Substitute(
+                          Coalesce(ThisRecord.Notes, ""),
+                          """",
+                          """"""
+                      ) & """",
+                      Char(10)
+                  )
+              );
+              Notify(
+                  "Monthly CSV generated successfully.",
+                  NotificationType.Success
+              )
+            Text: ="Generate CSV"
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =180
+            Y: =1094
+      - txt_CsvOutput:
+          Control: Classic/TextInput@2.3.2
+          Properties:
+            BorderColor: =RGBA(0,18,107,1)
+            Default: =gbl_CsvExportText
+            Font: =Font.'Open Sans'
+            Height: =120
+            Mode: =TextMode.MultiLine
+            Visible: =loc_AnalyticsMode = "Charts" && !IsBlank(gbl_CsvExportText)
+            Width: =580
+            X: =20
+            Y: =860
+      - Title2:
+          Control: Label@2.5.1
+          Group: complinechart_ExpencesChart
+          Properties:
+            Align: =Align.Center
+            BorderColor: =RGBA(0, 0, 0, 1)
+            Font: =Font.'Open Sans'
+            Height: =328
+            Size: =14
+            Text: ="Daily Expenses"
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =469
+            X: =20
+            Y: =508
+      - LineChart1:
+          Control: LineChart@2.3.0
+          Group: complinechart_ExpencesChart
+          Properties:
+            Height: =328
+            Items: |-
+              =With(
+                  {
+                      daysInMonth: Day(
+                          DateAdd(
+                              DateAdd(
+                                  Date(loc_SelectedYear, loc_SelectedMonth, 1),
+                                  1,
+                                  TimeUnit.Months
+                              ),
+                              -1,
+                              TimeUnit.Days
+                          )
+                      )
+                  },
+                  ForAll(
+                      Sequence(daysInMonth),
+                      {
+                          DayNum: Text(Value),
+                          ExpenseAmount: Sum(
+                              Filter(
+                                  col_Transactions,
+                                  TransactionType = "Expense" &&
+                                  DateValue(Text(TransactionDate)) = Date(loc_SelectedYear, loc_SelectedMonth, Value)
+                              ),
+                              Value(Amount)
+                          )
+                      }
+                  )
+              )
+            Items.Labels: =DayNum
+            Items.Series1: =ExpenseAmount
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =469
+            X: =20
+            Y: =508
+      - Legend2:
+          Control: Legend@2.1.0
+          Group: complinechart_ExpencesChart
+          Properties:
+            Font: =Font.'Open Sans'
+            Height: =428
+            ItemColorSet: =LineChart1.ItemColorSet
+            Items: =LineChart1.SeriesLabels
+            Items.Value: =Value
+            Visible: =loc_AnalyticsMode = "Charts"
+            Width: =600
+            X: =20
+            Y: =408
