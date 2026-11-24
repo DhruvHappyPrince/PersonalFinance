@@ -1,0 +1,23 @@
+App:- 
+OnStart =
+Set(gbl_CurrencySymbol, "₹");
+Set(gbl_CurrencyCode, "INR");
+Set(gbl_Timeframe, "Month");
+Set(gbl_FilterType, "All");
+Set(
+    gbl_SelectedTx,
+    {
+        TransactionId: "",
+        TransactionType: "Expense",
+        Amount: 0,
+        TransactionDate: Today(),
+        CategoryId: "",
+        AccountId: "",
+        Notes: ""
+    }
+);
+
+ClearCollect(col_Categories, Filter(tbl_Categories, IsActive = true));
+ClearCollect(col_Accounts, Filter(tbl_Accounts, IsActive = true));
+ClearCollect(col_Budgets, Filter(tbl_Budgets, IsActive = true));
+ClearCollect(col_Transactions, tbl_Transactions);
