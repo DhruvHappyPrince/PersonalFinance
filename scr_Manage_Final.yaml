@@ -42,13 +42,13 @@ Screens:
       - lbl_ManageTitle_1:
           Control: Label@2.5.1
           Properties:
-            Font: =Font.'Open Sans'
+            Font: =Font.Georgia
             FontWeight: =FontWeight.Bold
             Height: =42
             Size: =24
             Text: ="Manage Finance"
             Width: =Parent.Width - 170
-            X: =80
+            X: =150
             Y: =20
       - btn_TabCategories_1:
           Control: Classic/Button@2.2.0
@@ -121,7 +121,7 @@ Screens:
             Height: =44
             HintText: ="Category name (e.g. Dining, Salary)"
             Visible: =loc_ManageTab = "Categories"
-            Width: =(Parent.Width - 60) * 0.55
+            Width: =463
             X: =20
             Y: =180
       - dd_CategoryType_1:
@@ -134,8 +134,8 @@ Screens:
             Items.Value: =Value
             Visible: =loc_ManageTab = "Categories"
             Width: =(Parent.Width - 60) * 0.25
-            X: =40 + (Parent.Width - 60) * 0.55
-            Y: =180
+            X: =524
+            Y: =181
       - btn_SaveCategory_1:
           Control: Classic/Button@2.2.0
           Properties:
@@ -231,33 +231,33 @@ Screens:
             Color: =If(loc_CategoryView = "Active", Color.White, Color.Black)
             Fill: =If(loc_CategoryView = "Active", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
             Font: =Font.'Open Sans'
-            Height: =34
+            Height: =51
             OnSelect: |-
               =UpdateContext({loc_CategoryView: "Active"})
             Text: ="Active"
             Visible: =loc_ManageTab = "Categories"
-            Width: =100
-            X: =20
-            Y: =265
+            Width: =182
+            X: =468
+            Y: =313
       - btn_CategoriesHidden:
           Control: Classic/Button@2.2.0
           Properties:
             Color: =If(loc_CategoryView = "Hidden", Color.White, Color.Black)
             Fill: =If(loc_CategoryView = "Hidden", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
             Font: =Font.'Open Sans'
-            Height: =34
+            Height: =51
             OnSelect: |-
               =UpdateContext({loc_CategoryView: "Hidden"})
             Text: ="Hidden"
             Visible: =loc_ManageTab = "Categories"
-            Width: =100
-            X: =130
-            Y: =265
+            Width: =165
+            X: =693
+            Y: =313
       - gal_Categories_1:
           Control: Gallery@2.15.0
           Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
           Properties:
-            Height: =Max(180, Parent.Height - 320)
+            Height: =381
             Items: |-
               =Filter(
                   col_Categories,
@@ -269,8 +269,8 @@ Screens:
               )
             TemplateSize: =88
             Visible: =loc_ManageTab = "Categories"
-            Width: =Parent.Width - 40
-            Y: =305
+            Width: =1366
+            Y: =386
           Children:
             - lbl_CatItem_1:
                 Control: Label@2.5.1
@@ -354,35 +354,35 @@ Screens:
           Control: Classic/DropDown@2.3.1
           Properties:
             Default: =Coalesce(LookUp(col_Categories, CategoryId = loc_EditBudgetCategoryId).CategoryName, "")
+            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
             Font: =Font.'Open Sans'
             Height: =44
             Items: =Filter(col_Categories, CategoryType = "Expense" && Upper(Text(IsActive)) = "TRUE")
             Items.Value: =CategoryName
             Visible: =loc_ManageTab = "Budgets"
-            Width: =(Parent.Width - 60) * 0.50
+            Width: =310
             X: =20
             Y: =180
-            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
       - txt_BudgetAmount:
           Control: Classic/TextInput@2.3.2
           Properties:
             Default: =If(IsBlank(loc_EditBudgetAmount), "", Text(loc_EditBudgetAmount))
             Font: =Font.'Open Sans'
             Format: =TextFormat.Number
-            Height: =44
+            Height: =43
             HintText: ="Monthly budget amount"
             Visible: =loc_ManageTab = "Budgets"
-            Width: =195
-            X: =40 + (Parent.Width - 60) * 0.50
-            Y: =180
+            Width: =271
+            X: =358
+            Y: =181
       - txt_BudgetMonth:
           Control: Classic/TextInput@2.3.2
           Properties:
             Default: =Coalesce(loc_EditBudgetMonth, Text(Today(), "[$-en-US]yyyy-mm"))
+            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
             Font: =Font.'Open Sans'
             Height: =44
             HintText: ="Budget month (YYYY-MM, e.g. 2026-11)"
-            DisplayMode: =If(!IsBlank(loc_EditBudgetId), DisplayMode.Disabled, DisplayMode.Edit)
             Visible: =loc_ManageTab = "Budgets"
             Width: =190
             X: =20
@@ -490,7 +490,7 @@ Screens:
           Control: Gallery@2.15.0
           Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
           Properties:
-            Height: =Max(160, Parent.Height - 390)
+            Height: =381
             Items: |-
               =SortByColumns(
                   Filter(
@@ -502,8 +502,8 @@ Screens:
               )
             TemplateSize: =88
             Visible: =loc_ManageTab = "Budgets"
-            Width: =Parent.Width - 40
-            Y: =340
+            Width: =1366
+            Y: =386
           Children:
             - lbl_BudgetItem:
                 Control: Label@2.5.1
@@ -676,33 +676,33 @@ Screens:
             Color: =If(loc_AccountView = "Active", Color.White, Color.Black)
             Fill: =If(loc_AccountView = "Active", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
             Font: =Font.'Open Sans'
-            Height: =34
+            Height: =38
             OnSelect: |-
               =UpdateContext({loc_AccountView: "Active"})
             Text: ="Active"
             Visible: =loc_ManageTab = "Accounts"
-            Width: =100
-            X: =20
-            Y: =265
+            Width: =181
+            X: =361
+            Y: =284
       - btn_AccountsHidden:
           Control: Classic/Button@2.2.0
           Properties:
             Color: =If(loc_AccountView = "Hidden", Color.White, Color.Black)
             Fill: =If(loc_AccountView = "Hidden", RGBA(56, 96, 178, 1), RGBA(230, 233, 240, 1))
             Font: =Font.'Open Sans'
-            Height: =34
+            Height: =38
             OnSelect: |-
               =UpdateContext({loc_AccountView: "Hidden"})
             Text: ="Hidden"
             Visible: =loc_ManageTab = "Accounts"
-            Width: =100
-            X: =130
-            Y: =265
+            Width: =200
+            X: =629
+            Y: =284
       - gal_Accounts:
           Control: Gallery@2.15.0
           Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
           Properties:
-            Height: =Max(180, Parent.Height - 320)
+            Height: =429
             Items: |-
               =Filter(
                   col_Accounts,
@@ -714,8 +714,8 @@ Screens:
               )
             TemplateSize: =88
             Visible: =loc_ManageTab = "Accounts"
-            Width: =Parent.Width - 40
-            Y: =305
+            Width: =1355
+            Y: =338
           Children:
             - lbl_AccItem:
                 Control: Label@2.5.1
